@@ -26,16 +26,22 @@ io.on('connection', (client) => { //el objeto  client viene con muchos metodos y
 
         client.broadcast.to(data.sala).emit('crearMensaje', crearMensaje('Administrador', `${data.nombre} se unió`));
         callback(usuarios.getPersonasPorSala(data.sala));
+
+
     });
 
     client.on('crearMensaje', (data, callback) => {
 
         let persona = usuarios.getPersona(client.id);
 
-        let mensaje = crearMensaje(persona.nombre, data.mensaje);
+        let mensaje = crearMensaje(persona.nombre, data.mensaje, data.sala);
         client.broadcast.to(persona.sala).emit('crearMensaje', mensaje);
         callback(mensaje);
     });
+
+
+
+
     client.on('disconnect', () => {
         let personaBorrada = usuarios.borrarPersona(client.id);
         client.broadcast.to(personaBorrada.sala).emit('crearMensaje', crearMensaje('Administrador', `${personaBorrada.nombre} salió`));
@@ -46,6 +52,18 @@ io.on('connection', (client) => { //el objeto  client viene con muchos metodos y
 
     client.on('mensajePrivado', data => {
         let persona = usuarios.getPersona(client.id);
-        client.broadcast.to(data.para).emit('mensajePrivado', crearMensaje(persona.nombre, data.mensaje))
+        //persona es el cliente que envia el mensaje
+
+        var info = {
+            nombre: persona.nombre,
+            mensaje: data.mensaje,
+            sala: data.id,
+            id: data.id
+        }
+
+
+        client.broadcast.to(data.id).emit('mensajePrivado', info)
+
+
     });
 });
